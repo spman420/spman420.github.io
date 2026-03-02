@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Random XYZ Distributor</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+}
+table {
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+th, td {
+    border: 1px solid #999;
+    padding: 6px 12px;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+
+<h2>XYZ Random Distributor</h2>
+
+<label>信仰の値を入力:</label>
+<input type="number" id="inputA" min="0" value="10">
+<button onclick="generate()">実行</button>
+
+<h3>ランダム割り振り結果</h3>
+<div id="result"></div>
+
+<h3>Zが◯◯以上になる確率表</h3>
+<div id="tableArea"></div>
+
+<script>
+function generate() {
+    const A = parseInt(document.getElementById("inputA").value);
+    if (isNaN(A) || A < 0) {
+        alert("信仰は0以上の整数を入力してください");
+        return;
+    }
+
+    // ---- ランダム割り振り ----
+    let r1 = Math.floor(Math.random() * (A + 1));
+    let r2 = Math.floor(Math.random() * (A + 1));
+    let cuts = [r1, r2].sort((a, b) => a - b);
+
+    let X = cuts[0];
+    let Y = cuts[1] - cuts[0];
+    let Z = A - cuts[1];
+
+    document.getElementById("result").innerHTML =
+        `X = ${X}, Y = ${Y}, Z = ${Z}`;
+
+    // ---- 累積確率表作成（降順）----
+    let denominator = (A + 1) * (A + 2);
+    let table = "<table><tr><th>Z以上</th><th>確率</th></tr>";
+
+    for (let k = A; k >= 0; k--) {
+        let numerator = (A - k + 1) * (A - k + 2);
+        let prob = numerator / denominator;
+        let probPercent = (prob * 100).toFixed(2) + "%";
+
+        table += `<tr>
+                    <td>${k}</td>
+                    <td>${probPercent}</td>
+                  </tr>`;
+    }
+
+    table += "</table>";
+    document.getElementById("tableArea").innerHTML = table;
+}
+</script>
+
+</body>
+</html>
