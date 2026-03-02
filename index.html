@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Random XYZ Distributor</title>
+<title>XYZ Random Distributor (Binomial)</title>
 <style>
 body {
     font-family: Arial, sans-serif;
@@ -33,6 +33,19 @@ th, td {
 <div id="tableArea"></div>
 
 <script>
+function factorial(n) {
+    if (n === 0 || n === 1) return 1;
+    let result = 1;
+    for (let i = 2; i <= n; i++) {
+        result *= i;
+    }
+    return result;
+}
+
+function combination(n, k) {
+    return factorial(n) / (factorial(k) * factorial(n - k));
+}
+
 function generate() {
     const A = parseInt(document.getElementById("inputA").value);
     if (isNaN(A) || A < 0) {
@@ -40,26 +53,32 @@ function generate() {
         return;
     }
 
-    // ---- ランダム割り振り ----
-    let r1 = Math.floor(Math.random() * (A + 1));
-    let r2 = Math.floor(Math.random() * (A + 1));
-    let cuts = [r1, r2].sort((a, b) => a - b);
+    // ---- ランダム抽選（1/3ずつ）----
+    let X = 0, Y = 0, Z = 0;
 
-    let X = cuts[0];
-    let Y = cuts[1] - cuts[0];
-    let Z = A - cuts[1];
+    for (let i = 0; i < A; i++) {
+        let r = Math.floor(Math.random() * 3);
+        if (r === 0) X++;
+        else if (r === 1) Y++;
+        else Z++;
+    }
 
     document.getElementById("result").innerHTML =
         `X = ${X}, Y = ${Y}, Z = ${Z}`;
 
-    // ---- 累積確率表作成（降順）----
-    let denominator = (A + 1) * (A + 2);
+    // ---- Z以上の確率----
     let table = "<table><tr><th>Z以上</th><th>確率</th></tr>";
 
     for (let k = A; k >= 0; k--) {
-        let numerator = (A - k + 1) * (A - k + 2);
-        let prob = numerator / denominator;
-        let probPercent = (prob * 100).toFixed(2) + "%";
+        let cumulative = 0;
+
+        for (let i = k; i <= A; i++) {
+            cumulative += combination(A, i) *
+                Math.pow(1/3, i) *
+                Math.pow(2/3, A - i);
+        }
+
+        let probPercent = (cumulative * 100).toFixed(4) + "%";
 
         table += `<tr>
                     <td>${k}</td>
