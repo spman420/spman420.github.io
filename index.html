@@ -7,14 +7,22 @@
 body {
     font-family: Arial, sans-serif;
 }
+.container {
+    display: flex;
+    gap: 40px;
+    margin-top: 20px;
+}
 table {
     border-collapse: collapse;
-    margin-top: 20px;
 }
 th, td {
     border: 1px solid #999;
     padding: 6px 12px;
     text-align: center;
+}
+.highlight {
+    background-color: #ffcc00;
+    font-weight: bold;
 }
 </style>
 </head>
@@ -23,22 +31,28 @@ th, td {
 <h2>XYZ Random Distributor</h2>
 
 <label>信仰の値を入力:</label>
-<input type="number" id="inputA" min="0" value="20">
+<input type="number" id="inputA" min="0" value="10">
 <button onclick="generate()">実行</button>
 
 <h3>ランダム割り振り結果</h3>
 <div id="result"></div>
 
-<h3>Zが◯◯以上になる確率表</h3>
-<div id="tableArea"></div>
+<div class="container">
+    <div>
+        <h3>Zが◯◯以上になる確率</h3>
+        <div id="cumulativeTable"></div>
+    </div>
+    <div>
+        <h3>Z = ◯◯ になる確率</h3>
+        <div id="exactTable"></div>
+    </div>
+</div>
 
 <script>
 function factorial(n) {
     if (n === 0 || n === 1) return 1;
     let result = 1;
-    for (let i = 2; i <= n; i++) {
-        result *= i;
-    }
+    for (let i = 2; i <= n; i++) result *= i;
     return result;
 }
 
@@ -53,9 +67,8 @@ function generate() {
         return;
     }
 
-    // ---- ランダム抽選（1/3ずつ）----
+    // ---- ランダム抽選 ----
     let X = 0, Y = 0, Z = 0;
-
     for (let i = 0; i < A; i++) {
         let r = Math.floor(Math.random() * 3);
         if (r === 0) X++;
@@ -66,31 +79,51 @@ function generate() {
     document.getElementById("result").innerHTML =
         `X = ${X}, Y = ${Y}, Z = ${Z}`;
 
-    // ---- Z以上の確率----
-    let table = "<table><tr><th>Z以上</th><th>確率</th></tr>";
+    let cumulativeHTML = "<table><tr><th>Z以上</th><th>確率</th></tr>";
+    let exactHTML = "<table><tr><th>Z</th><th>確率</th></tr>";
 
-    for (let k = A; k >= 0; k--) {
-        let cumulative = 0;
+    let probabilities = [];
+    let maxProb = 0;
 
-        for (let i = k; i <= A; i++) {
-            cumulative += combination(A, i) *
-                Math.pow(1/3, i) *
-                Math.pow(2/3, A - i);
-        }
+    // ---- 各確率計算 ----
+    for (let k = 0; k <= A; k++) {
+        let prob = combination(A, k) *
+            Math.pow(1/3, k) *
+            Math.pow(2/3, A - k);
 
-        let probPercent = (cumulative * 100).toFixed(4) + "%";
-
-        table += `<tr>
-                    <td>${k}</td>
-                    <td>${probPercent}</td>
-                  </tr>`;
+        probabilities.push(prob);
+        if (prob > maxProb) maxProb = prob;
     }
 
-    table += "</table>";
-    document.getElementById("tableArea").innerHTML = table;
+    // ---- 累積確率（降順）----
+    for (let k = A; k >= 0; k--) {
+        let cumulative = 0;
+        for (let i = k; i <= A; i++) {
+            cumulative += probabilities[i];
+        }
+
+        cumulativeHTML += `<tr>
+            <td>${k}</td>
+            <td>${(cumulative * 100).toFixed(4)}%</td>
+        </tr>`;
+    }
+    cumulativeHTML += "</table>";
+
+    // ---- 正確率（最頻値ハイライト）----
+    for (let k = 0; k <= A; k++) {
+        let highlight = probabilities[k] === maxProb ? "highlight" : "";
+
+        exactHTML += `<tr class="${highlight}">
+            <td>${k}</td>
+            <td>${(probabilities[k] * 100).toFixed(4)}%</td>
+        </tr>`;
+    }
+    exactHTML += "</table>";
+
+    document.getElementById("cumulativeTable").innerHTML = cumulativeHTML;
+    document.getElementById("exactTable").innerHTML = exactHTML;
 }
 </script>
 
 </body>
 </html>
-
